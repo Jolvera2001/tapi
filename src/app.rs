@@ -17,7 +17,7 @@ struct GreetArgs<'a> {
 
 #[component]
 pub fn App() -> View {
-    let name = create_signal(String::new());
+    let count = create_signal(0);
 
     // let greet = move |e: SubmitEvent| {
     //     e.prevent_default();
@@ -33,9 +33,16 @@ pub fn App() -> View {
     // };
 
     view! {
-        div(class="flex items-center justify-center min-h-screen bg-gray-100") {
+        div(class="flex flex-col items-center justify-center min-h-screen bg-gray-100 space-y-5") {
             div(class="p-6 bg-white rounded-lg shadow-lg") {
-                h1(class="text-2xl font-bold text-gray-800") { "Hello Tailwind!"}
+                h1(class="text-2xl font-bold text-gray-800") { "Hello Tailwind!" }
+                h2(class="text-xl font-thin text-gray-700") { (count) }
+            }
+            div(class="flex flex-row space-x-5") {
+                button(class="p-6 text-md rounded-md bg-gray-700",
+                        on:click=move |_| count.set(count.get() + 1)) { "+" }
+                button(class="p-6 text-md rounded-md bg-gray-700",
+                        on:click=move |_| count.set(count.get() - 1)) { "-" }
             }
         }
     }
