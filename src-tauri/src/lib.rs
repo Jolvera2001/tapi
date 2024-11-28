@@ -16,8 +16,7 @@ async fn make_request(url: &str) -> Result<String, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet])
-        .invoke_handler(tauri::generate_handler![make_request])
+        .invoke_handler(tauri::generate_handler![greet, make_request])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
