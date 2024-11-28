@@ -46,18 +46,11 @@ fn RequestComponent() -> View {
     let handle_submit = move |_| {
         let url = request_value.get_clone();
         spawn_local_scoped(async move {
-            if let Ok(args) = serde_wasm_bindgen::to_value(&RequestArgs {
-                url: &url
-            }) {
-                match invoke("make_request", args).await {
-                    Ok(response) => {
-
-                    },
-                    Err(e) => {
-                        request_result.set(format!("Error: {}", e));
-                    }
-                }
-            }
+            let args = serde_wasm_bindgen::to_value(&RequestArgs{
+                url: &url,
+            }).unwrap();
+            let res = invoke("make_request", args).await;
+            request_result.set(res.as_string().unwrap());
         });
     };
 
@@ -78,7 +71,9 @@ fn RequestComponent() -> View {
                 }
             }
             div {
-                p(bind:value=request_result)
+                p {
+                  (request_result)   
+                }
             }
         }
     }
