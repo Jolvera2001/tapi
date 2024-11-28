@@ -69,8 +69,8 @@ fn RequestComponent() -> View {
                     "Send"
                 }
             }
-            div {
-                p {
+            div(class="whitespace-pre-wrap font-mono bg-gray-100 p-4 rounded") {
+                pre {
                   (request_result)   
                 }
             }

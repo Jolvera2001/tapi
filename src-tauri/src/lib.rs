@@ -7,7 +7,13 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 async fn make_request(url: &str) -> Result<String, String> {
     match reqwest::get(url).await {
-        Ok(response) => Ok(response.text().await.unwrap()),
+        Ok(response) => {
+            let text = response.text().await.unwrap();
+            match serde_json::from_str::<serde_json::Value>(&text) {
+                Ok(json) => Ok(serde_json::to_string_pretty(&json).unwrap()),
+                Err(_) => Ok(text)
+            }
+        },
         Err(e) => Err(e.to_string())
     }
 }
