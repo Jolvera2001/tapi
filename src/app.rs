@@ -41,6 +41,7 @@ pub fn App() -> View {
 fn RequestComponent() -> View {
     let request_value = create_signal(String::new());
     let request_result = create_signal(String::new());
+    let request_method = create_signal(String::from("GET"));
     
     let handle_submit = move |_| {
         let url = request_value.get_clone();
@@ -56,6 +57,16 @@ fn RequestComponent() -> View {
     view! {
         div(class="flex flex-col p-2 space-y-2") {
             div(class=" flex flex-row space-x-2") {
+                select(
+                    bind:value=request_method,
+                    class="border rounded p-2"
+                ) {
+                    option(value="GET") { "GET" }
+                    option(value="GET") { "POST" }
+                    option(value="GET") { "PUT" }
+                    option(value="GET") { "PATCH" }
+                    option(value="GET") { "DELETE" }
+                }
                 input(
                     "type"="text",
                     bind:value=request_value,
