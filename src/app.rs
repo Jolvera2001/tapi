@@ -51,6 +51,7 @@ fn RequestComponent() -> View {
 
     // conditional signals
     let result_show = create_signal(true);
+    let active_tab = create_signal(0);
     
     let handle_submit = move |_| {
         result_show.set(false);
@@ -99,7 +100,47 @@ fn RequestComponent() -> View {
                     "Send"
                 }
             }
-            div(class="")
+            div(class="w-full mx-auto p-4") {
+                div(class="flex border-b") {
+                    button(
+                        class=format!("px-2 py-1 {} {}",
+                            "focus:outline-none",
+                            if active_tab.get() == 0 { 
+                                "border-b-2 border-blue-500 font-medium" 
+                            } else { 
+                                "text-gray-500 hover:text-blue-500" 
+                            }
+                        ),
+                        on:click=move |_| active_tab.set(0)
+                    ) {
+                        "Params"
+                    }
+                    button(
+                        class=format!("px-2 py-1 {} {}",
+                            "focus:outline-none",
+                            if active_tab.get() == 1 {
+                                "border-b-2 border-blue-500 font-medium"
+                            } else { 
+                                "text-gray-500 hover:text-blue-500" 
+                            }
+                        ),
+                        on:click=move |_| active_tab.set(1)
+                    ) {
+                        "Body"
+                    }
+                    div(class="m-4") {
+                        (match active_tab.get() {
+                            0 => view! {
+                                div { "Params view!" }
+                            },
+                            1 => view! {
+                                div{ "Body view!" }
+                            },
+                            _ => view! { div{} }
+                        })
+                    }
+                }
+            }
             // response area
             div(class="flex flex-col") {
                 (if result_show.get() {
