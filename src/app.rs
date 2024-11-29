@@ -80,9 +80,15 @@ fn RequestComponent() -> View {
                     "Send"
                 }
             }
-            div(class="whitespace-pre-wrap font-mono bg-gray-100 p-4 rounded") {
-                pre {
-                  (request_result)   
+            div(class="flex flex-col") {
+                div(class="overflow-auto whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded max-h-64") {
+                    pre {
+                        (request_result)   
+                    }
+                }
+                div(class="border-2 shadow-sm text-xs p-2") {
+                    p { "Status code: "}
+                    p { }
                 }
             }
         }
