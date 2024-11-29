@@ -1,18 +1,28 @@
+use serde::{Deserialize, Serialize};
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[derive(Serialize)]
+struct RequestResponse {
+    data: String,
+    status: u16,
+}
+
 #[tauri::command]
-async fn make_request(url: &str) -> Result<String, String> {
-    match reqwest::get(url).await {
+async fn make_request(url: &str, method: &str) -> Result<RequestResponse, String> {
+    match reqwest::Client::new()
+        .request(method.parse().unwrap(), url)
+        .send()
+        .await
+    {
         Ok(response) => {
-            let text = response.text().await.unwrap();
-            match serde_json::from_str::<serde_json::Value>(&text) {
-                Ok(json) => Ok(serde_json::to_string_pretty(&json).unwrap()),
-                Err(_) => Ok(text)
-            }
+            let status = response.status().as_u16();
+            let data = response.text().await.unwrap();
+            Ok(RequestResponse {data, status})
         },
         Err(e) => Err(e.to_string())
     }

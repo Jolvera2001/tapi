@@ -15,18 +15,22 @@ struct RequestArgs<'a> {
     url: &'a str,
 }
 
-// let greet = move |e: SubmitEvent| {
-//     e.prevent_default();
-//     spawn_local_scoped(async move {
-//         // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-//         let args = serde_wasm_bindgen::to_value(&GreetArgs {
-// 			name: &name.get_clone()
-// 		})
-// 		.unwrap();
-//         let new_msg = invoke("greet", args).await;
-//         greet_msg.set(new_msg.as_string().unwrap());
-//     })
-// };
+
+// we don't need to have lifetimes because we will own this data here
+
+// lifetimes -> data being sent as it will be gone after the command is invoked
+// owned <- data recieved from command
+#[derive(Serialize, Deserialize)]
+struct RequestCommandArgs<'a> {
+    url: &'a str,
+    method: &'a str,
+}
+
+#[derive(Serialize, Deserialize)]
+struct RequestResponse {
+    data: String,
+    status: u16,
+}
 
 #[component]
 pub fn App() -> View {
@@ -42,15 +46,23 @@ fn RequestComponent() -> View {
     let request_value = create_signal(String::new());
     let request_result = create_signal(String::new());
     let request_method = create_signal(String::from("GET"));
+    let status_code = create_signal(0);
     
     let handle_submit = move |_| {
         let url = request_value.get_clone();
+        let method = request_method.get_clone();
         spawn_local_scoped(async move {
-            let args = serde_wasm_bindgen::to_value(&RequestArgs{
+            let args = serde_wasm_bindgen::to_value(&RequestCommandArgs{
                 url: &url,
+                method: &method
             }).unwrap();
             let res = invoke("make_request", args).await;
-            request_result.set(res.as_string().unwrap());
+            let response: RequestResponse = serde_wasm_bindgen::from_value(res).unwrap();
+            match serde_json::from_str::<serde_json::Value>(&response.data) {
+                Ok(json) => request_result.set(serde_json::to_string_pretty(&json).unwrap()),
+                Err(e) => request_result.set(e.to_string())
+            }
+            status_code.set(response.status);
         });
     };
 
@@ -62,10 +74,10 @@ fn RequestComponent() -> View {
                     class="border rounded p-2"
                 ) {
                     option(value="GET") { "GET" }
-                    option(value="GET") { "POST" }
-                    option(value="GET") { "PUT" }
-                    option(value="GET") { "PATCH" }
-                    option(value="GET") { "DELETE" }
+                    option(value="POST") { "POST" }
+                    option(value="PUT") { "PUT" }
+                    option(value="PATCH") { "PATCH" }
+                    option(value="DELETE") { "DELETE" }
                 }
                 input(
                     "type"="text",
@@ -87,7 +99,7 @@ fn RequestComponent() -> View {
                     }
                 }
                 div(class="border-2 shadow-sm text-xs p-2") {
-                    p { "Status code: "}
+                    p { "Status code: " (status_code)}
                     p { }
                 }
             }
