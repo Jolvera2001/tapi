@@ -43,12 +43,17 @@ pub fn App() -> View {
 
 #[component]
 fn RequestComponent() -> View {
+    // data signals
     let request_value = create_signal(String::new());
     let request_result = create_signal(String::new());
     let request_method = create_signal(String::from("GET"));
     let status_code = create_signal(0);
+
+    // conditional signals
+    let result_show = create_signal(true);
     
     let handle_submit = move |_| {
+        result_show.set(false);
         let url = request_value.get_clone();
         let method = request_method.get_clone();
         spawn_local_scoped(async move {
@@ -64,10 +69,12 @@ fn RequestComponent() -> View {
             }
             status_code.set(response.status);
         });
+        result_show.set(true);
     };
 
     view! {
         div(class="flex flex-col p-2 space-y-2") {
+            // request builder area
             div(class=" flex flex-row space-x-2") {
                 select(
                     bind:value=request_method,
@@ -92,16 +99,25 @@ fn RequestComponent() -> View {
                     "Send"
                 }
             }
+            div(class="")
+            // response area
             div(class="flex flex-col") {
-                div(class="overflow-auto whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded max-h-64") {
-                    pre {
-                        (request_result)   
+                (if result_show.get() {
+                    view! {
+                        div(class="overflow-auto whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded max-h-64") {
+                            pre {
+                                (request_result)   
+                            }
+                        }
+                        div(class="border-2 shadow-sm text-xs p-2") {
+                            p { "Status code: " (status_code)}
+                        }
                     }
-                }
-                div(class="border-2 shadow-sm text-xs p-2") {
-                    p { "Status code: " (status_code)}
-                    p { }
-                }
+                } else {
+                    view! {
+                        p { "Loading..." }
+                    }
+                })
             }
         }
     }
