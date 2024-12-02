@@ -1,5 +1,5 @@
 #[component]
-fn BodyComponent() -> view {
+pub fn BodyComponent() -> View {
     view! {
         div(class="flex border-b") {
             button(

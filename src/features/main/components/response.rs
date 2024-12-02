@@ -1,5 +1,5 @@
 #[component]
-fn ResponseComponent() -> view {
+pub fn ResponseComponent() -> View {
     view! {
         div(class="flex flex-col") {
             (if result_show.get() {
