@@ -1,0 +1,4 @@
+#[component]
+fn MainPage() -> view {
+
+} 
