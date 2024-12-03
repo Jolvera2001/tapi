@@ -83,10 +83,11 @@ fn RequestComponent() -> View {
                     let end = target.selection_end().unwrap().unwrap();
                     let value = target.value();
 
-                    let new_value = format!("{}    {}", 
-                        &value[..start as usize], 
-                        &value[end as usize..]    
-                    );
+                    let before = &value[..start as usize];
+                    let after = &value[end as usize..];
+                    let new_value = format!("{}  {}", before, after);
+
+                    target.set_value(&new_value);
 
                     let new_pos = start + 2;
                     target.set_selection_start(Some(new_pos)).unwrap();
