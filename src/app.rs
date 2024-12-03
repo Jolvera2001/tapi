@@ -27,7 +27,7 @@ struct RequestResponse {
 #[component]
 pub fn App() -> View {
     view! {
-        div(class="w-screen h-screen") {
+        div(class="w-screen h-screen scroll-inner") {
             RequestComponent()
         }
     }
@@ -214,32 +214,34 @@ fn RequestComponent() -> View {
                                                 "Add Parameter"
                                             }
                                         }
-                                        Indexed(
-                                            list=params,
-                                            view=move |param| {
-                                                let param = param.clone();
-                                                let key_to_remove = param.key.clone();
-                                                view! {
-                                                    div(class="flex flex-row items-center justify-between bg-gray-50 rounded-lg p-2 hover:bg-gray-100 group") {
-                                                        div(class="flex items-center space-x-2") {
-                                                            span(class="font-medium text-gray-600") { (param.key.clone()) }
-                                                            span(class="text-gray-400") { "=" }
-                                                            span(class="text-gray-800") { (param.val.clone()) }
-                                                        }
-                                                        button(
-                                                            class="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity",
-                                                            on:click=move |_| {
-                                                                let mut current = params.get_clone();
-                                                                current.retain(|p| p.key != key_to_remove);
-                                                                params.set(current);
+                                        div(class="flex flex-col space-y-2 overflow-auto max-h-32 shadow-inner") {
+                                            Indexed(
+                                                list=params,
+                                                view=move |param| {
+                                                    let param = param.clone();
+                                                    let key_to_remove = param.key.clone();
+                                                    view! {
+                                                        div(class="flex flex-row items-center justify-between bg-gray-50 rounded-lg p-2 hover:bg-gray-100 group") {
+                                                            div(class="flex items-center space-x-2") {
+                                                                span(class="font-medium text-gray-600") { (param.key.clone()) }
+                                                                span(class="text-gray-400") { "=" }
+                                                                span(class="text-gray-800") { (param.val.clone()) }
                                                             }
-                                                        ) {
-                                                            "remove"
+                                                            button(
+                                                                class="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity",
+                                                                on:click=move |_| {
+                                                                    let mut current = params.get_clone();
+                                                                    current.retain(|p| p.key != key_to_remove);
+                                                                    params.set(current);
+                                                                }
+                                                            ) {
+                                                                "remove"
+                                                            }
                                                         }
                                                     }
                                                 }
-                                            }
-                                        )
+                                            )
+                                        }
                                     }
                             },
                             1 => view! {
