@@ -36,13 +36,13 @@ struct RequestResponse {
 pub fn App() -> View {
     view! {
         div(class="w-screen h-screen") {
-            RequestComponent()
+            request_component()
         }
     }
 }
 
 #[component]
-fn RequestComponent() -> View {
+fn request_component() -> View {
     // data signals
     let request_value = create_signal(String::new());
     let request_result = create_signal(String::new());
