@@ -53,13 +53,30 @@ fn RequestComponent() -> View {
     let new_key = create_signal(String::new());
     let new_value = create_signal(String::new());
 
+    let build_url = create_memo(move || {
+        let base_url = request_value.get_clone();
+        let params_list = params.get_clone();
+
+        if params_list.is_empty() {
+            base_url
+        } else {
+            let query_string = params_list
+                .iter()
+                .map(|param| format!("{}={}", param.key, param.val))
+                .collect::<Vec<_>>()
+                .join("&");
+
+            format!("{}?{}", base_url, query_string)
+        }
+    });
+
     // conditional signals
     let result_show = create_signal(true);
     let active_tab = create_signal(0);
     
     let handle_submit = move |_| {
         result_show.set(false);
-        let url = request_value.get_clone();
+        let url = build_url.get_clone();
         let method = request_method.get_clone();
         spawn_local_scoped(async move {
             let args = serde_wasm_bindgen::to_value(&RequestCommandArgs{
@@ -129,6 +146,9 @@ fn RequestComponent() -> View {
                 }
             }
 
+            div(class="text-sm text-gray-600 mt-2") {
+                "Complete URL: " (build_url.get_clone())
+            }
             // tabs
             div(class="w-full mx-auto p-4") {
                 div(class="flex flex-col") {
