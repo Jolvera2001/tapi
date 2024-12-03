@@ -36,18 +36,19 @@ struct RequestResponse {
 pub fn App() -> View {
     view! {
         div(class="w-screen h-screen") {
-            request_component()
+            RequestComponent()
         }
     }
 }
 
 #[component]
-fn request_component() -> View {
+fn RequestComponent() -> View {
     // data signals
     let request_value = create_signal(String::new());
     let request_result = create_signal(String::new());
     let request_method = create_signal(String::from("GET"));
     let status_code = create_signal(0);
+    let body_content = create_signal(String::new());
 
     // conditional signals
     let result_show = create_signal(true);
@@ -71,6 +72,29 @@ fn request_component() -> View {
             status_code.set(response.status);
         });
         result_show.set(true);
+    };
+
+    let handle_tab = move |e: web_sys::KeyboardEvent| {
+        if e.key() == "Tab" {
+            e.prevent_default();
+            if let Some(target) = e.target()
+                .and_then(|t| t.dyn_into::<web_sys::HtmlTextAreaElement>().ok()) {
+                    let start = target.selection_start().unwrap().unwrap();
+                    let end = target.selection_end().unwrap().unwrap();
+                    let value = target.value();
+
+                    let new_value = format!("{}    {}", 
+                        &value[..start as usize], 
+                        &value[end as usize..]    
+                    );
+
+                    let new_pos = start + 2;
+                    target.set_selection_start(Some(new_pos)).unwrap();
+                    target.set_selection_end(Some(new_pos)).unwrap();
+
+                    body_content.set(new_value);
+            }
+        }
     };
 
     view! {
@@ -101,40 +125,49 @@ fn request_component() -> View {
                 }
             }
             div(class="w-full mx-auto p-4") {
-                div(class="flex border-b") {
-                    button(
-                        class=format!("px-2 py-1 {} {}",
-                            "focus:outline-none",
-                            if active_tab.get() == 0 { 
-                                "border-b-2 border-blue-500 font-medium" 
-                            } else { 
-                                "text-gray-500 hover:text-blue-500" 
-                            }
-                        ),
-                        on:click=move |_| active_tab.set(0)
-                    ) {
-                        "Params"
+                div(class="flex flex-col") {
+                    div(class="flex border-b") {
+                        button(
+                            class=format!("px-2 py-1 {} {}",
+                                "focus:outline-none",
+                                if active_tab.get() == 0 { 
+                                    "border-b-2 border-blue-500 font-medium" 
+                                } else { 
+                                    "text-gray-500 hover:text-blue-500" 
+                                }
+                            ),
+                            on:click=move |_| active_tab.set(0)
+                        ) {
+                            "Params"
+                        }
+                        button(
+                            class=format!("px-2 py-1 {} {}",
+                                "focus:outline-none",
+                                if active_tab.get() == 1 {
+                                    "border-b-2 border-blue-500 font-medium"
+                                } else { 
+                                    "text-gray-500 hover:text-blue-500" 
+                                }
+                            ),
+                            on:click=move |_| active_tab.set(1)
+                        ) {
+                            "Body"
+                        }
                     }
-                    button(
-                        class=format!("px-2 py-1 {} {}",
-                            "focus:outline-none",
-                            if active_tab.get() == 1 {
-                                "border-b-2 border-blue-500 font-medium"
-                            } else { 
-                                "text-gray-500 hover:text-blue-500" 
-                            }
-                        ),
-                        on:click=move |_| active_tab.set(1)
-                    ) {
-                        "Body"
-                    }
-                    div(class="m-4") {
+                    div(class="my-4") {
                         (match active_tab.get() {
                             0 => view! {
                                 div { "Params view!" }
                             },
                             1 => view! {
-                                div{ "Body view!" }
+                                div{ 
+                                    textarea(
+                                        bind:value=body_content,
+                                        on:keydown=handle_tab,
+                                        placeholder="Content here!",
+                                        class="w-full bg-gray-100 h-32 p-2 border rounded font-mono text-sm"
+                                    )
+                                 }
                             },
                             _ => view! { div{} }
                         })
@@ -142,16 +175,16 @@ fn request_component() -> View {
                 }
             }
             // response area
-            div(class="flex flex-col") {
+            div(class="flex flex-col p-2") {
                 (if result_show.get() {
                     view! {
+                        div(class="border-2 shadow-sm text-xs p-2") {
+                            p { "Status code: " (status_code)}
+                        }
                         div(class="overflow-auto whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded max-h-64") {
                             pre {
                                 (request_result)   
                             }
-                        }
-                        div(class="border-2 shadow-sm text-xs p-2") {
-                            p { "Status code: " (status_code)}
                         }
                     }
                 } else {
