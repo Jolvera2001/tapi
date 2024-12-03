@@ -1,48 +1,7 @@
-use serde::{Deserialize, Serialize};
-use sycamore::futures::spawn_local_scoped;
-use sycamore::prelude::*;
-use wasm_bindgen::prelude::*;
 
-// mod components;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = ["window", "__TAURI__", "core"])]
-    async fn invoke(cmd: &str, args: JsValue) -> JsValue;
-}
-
-// we don't need to have lifetimes because we will own this data here
-// lifetimes -> data being sent as it will be gone after the command is invoked
-// owned <- data recieved from command
-#[derive(Serialize, Deserialize)]
-struct RequestCommandArgs<'a> {
-    url: &'a str,
-    method: &'a str,
-}
-
-#[derive(Serialize, Deserialize)]
-struct RequestResponse {
-    data: String,
-    status: u16,
-}
 
 #[component]
-pub fn App() -> View {
-    view! {
-        div(class="w-screen h-screen scroll-inner") {
-            RequestComponent()
-        }
-    }
-}
-
-#[derive(Clone, PartialEq)]
-struct Param {
-    key: String,
-    val: String,
-}
-
-#[component]
-fn RequestComponent() -> View {
+pub fn RequestComponent() -> View {
     // data signals
     let request_value = create_signal(String::new());
     let request_result = create_signal(String::new());
