@@ -1,4 +1,31 @@
+use serde::{Deserialize, Serialize};
+use sycamore::futures::spawn_local_scoped;
+use sycamore::prelude::*;
+use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = ["window", "__TAURI__", "core"])]
+    async fn invoke(cmd: &str, args: JsValue) -> JsValue;
+}
+
+#[derive(Serialize, Deserialize)]
+struct RequestCommandArgs<'a> {
+    url: &'a str,
+    method: &'a str,
+}
+
+#[derive(Serialize, Deserialize)]
+struct RequestResponse {
+    data: String,
+    status: u16,
+}
+
+#[derive(Clone, PartialEq)]
+struct Param {
+    key: String,
+    val: String,
+}
 
 #[component]
 pub fn RequestComponent() -> View {

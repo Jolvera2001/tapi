@@ -3,7 +3,7 @@ use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
 
-// mod components;
+use crate::components::request;
 
 #[wasm_bindgen]
 extern "C" {
@@ -30,7 +30,7 @@ struct RequestResponse {
 pub fn App() -> View {
     view! {
         div(class="w-screen h-screen scroll-inner") {
-            RequestComponent()
+            request::RequestComponent()
         }
     }
 }
