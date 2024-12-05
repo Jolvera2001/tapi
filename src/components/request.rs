@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::from_str;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
@@ -13,6 +14,7 @@ extern "C" {
 struct RequestCommandArgs<'a> {
     url: &'a str,
     method: &'a str,
+    body: Option<&'a str>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -35,6 +37,7 @@ pub fn RequestComponent() -> View {
     let request_method = create_signal(String::from("GET"));
     let status_code = create_signal(0);
     let body_content = create_signal(String::new());
+    let body_valid = create_signal(true);
 
     // param tab
     let params = create_signal(Vec::<Param>::new());
@@ -62,14 +65,19 @@ pub fn RequestComponent() -> View {
     let result_show = create_signal(true);
     let active_tab = create_signal(0);
     
+    // functions
     let handle_submit = move |_| {
+        if !body_valid.get() { return; }
         result_show.set(false);
         let url = build_url.get_clone();
         let method = request_method.get_clone();
+        let body = body_content.get_clone();
+
         spawn_local_scoped(async move {
             let args = serde_wasm_bindgen::to_value(&RequestCommandArgs{
                 url: &url,
-                method: &method
+                method: &method,
+                body: Some(&body)
             }).unwrap();
             let res = invoke("make_request", args).await;
             let response: RequestResponse = serde_wasm_bindgen::from_value(res).unwrap();
@@ -80,6 +88,11 @@ pub fn RequestComponent() -> View {
             status_code.set(response.status);
         });
         result_show.set(true);
+    };
+
+    let validate_json = move |input: &str| {
+        let is_valid = input.is_empty() || from_str::<serde_json::Value>(input).is_ok();
+        body_valid.set(is_valid);
     };
 
     let handle_tab = move |e: web_sys::KeyboardEvent| {
@@ -237,6 +250,7 @@ pub fn RequestComponent() -> View {
                                     textarea(
                                         bind:value=body_content,
                                         on:keydown=handle_tab,
+                                        on:input=move |e: web_sys::Event| validate_json(&e.unchecked_into::<web_sys::HtmlTextAreaElement>().value()),
                                         placeholder="Content here!",
                                         class="w-full bg-gray-100 h-32 p-2 border rounded font-mono text-sm"
                                     )
