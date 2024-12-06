@@ -1,0 +1,35 @@
+name: Coverage
+
+on: 
+    push:
+        branches: [ main ]
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1 
+              with:
+                toolchain: stable
+                override: true
+                components: llvm-tools-preview
+
+            - name: Install grcov
+              run: cargo install grcov
+
+            - name: Run tests with coverage
+              run: |
+                RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="coverage-%p-%m.profraw" cargo test
+                grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o coverage.lcov
+
+            - name: Upload coverage reporst to Codecov
+              uses: codecov/codecov-action@v5
+              with:
+                token: ${{ secrets.CODECOV_TOKEN }}
+                files: ./coverage.lcov
+                fail_ci_if_error: true
