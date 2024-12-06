@@ -1,8 +1,9 @@
 # Tapi
 
-[![Build Status](https://github.com/jolvera2001/tapi/workflows/Tauri%20App%20Build/badge.svg)](https://github.com/jolvera2001/tapi/actions)
+
 ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey)
 ![Release Version](https://img.shields.io/github/v/release/jolvera2001/tapi?include_prereleases)
+[![Coverage](https://codecov.io/gh/jolvera2001/tapi/graph/badge.svg)](https://codecov.io/gh/jolvera2001/tapi)
 
 Tapi is a small project I thought of to learn more about Rust and using Wasm with it. This project is essentially just Postman, and API tester where you can send API requests with parameters and Json Bodies. Currently, the current version only does:
 
