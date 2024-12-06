@@ -3,3 +3,5 @@
 /Cargo.lock
 
 /node_modules
+
+run-coverage.ps1
