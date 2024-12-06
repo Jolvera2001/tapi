@@ -4,4 +4,13 @@
 
 /node_modules
 
+# Coverage related files
+*.profraw
+coverage.md
+coverage/
+coverage.lcov
 run-coverage.ps1
+
+# Environment files
+.env
+.env.local
