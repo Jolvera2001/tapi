@@ -1,4 +1,5 @@
 use tauri::Manager;
+use tapi_lib::commands::requests::{make_request, RequestResponse};
 
 #[cfg(test)]
 mod tests {
