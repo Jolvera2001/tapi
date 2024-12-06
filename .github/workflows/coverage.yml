@@ -22,10 +22,27 @@ jobs:
             - name: Install grcov
               run: cargo install grcov
 
-            - name: Run tests with coverage
+            - name: Run frontend tests with coverage
               run: |
-                RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="coverage-%p-%m.profraw" cargo test
-                grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o coverage.lcov
+                RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="frontend-%p-%m.profraw" cargo test --manifest-path ./Cargo.toml
+          
+            - name: Run backend tests with coverage
+              run: |
+                RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="backend-%p-%m.profraw" cargo test --manifest-path ./src-tauri/Cargo.toml
+
+            - name: Generate combined coverage report
+              run: |
+                grcov . \
+                --binary-path ./target/debug/ \
+                -s . \
+                -t lcov \
+                --branch \
+                --ignore-not-existing \
+                --ignore "/*" \
+                --ignore "src-tauri/target/*" \
+                --ignore "target/*" \
+                -o coverage.lcov \
+                ./**/*.profraw
 
             - name: Upload coverage reporst to Codecov
               uses: codecov/codecov-action@v5
