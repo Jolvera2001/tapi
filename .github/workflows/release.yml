@@ -19,6 +19,13 @@ jobs:
               with:
                 toolchain: stable
 
+                # Windows-specific OpenSSL setup
+            - name: Install OpenSSL (Windows)
+              if: matrix.os == 'windows-latest'
+              run: |
+                vcpkg integrate install
+                vcpkg install openssl:x64-windows-static
+
             - name: Install dependencies
               run: |
                 rustup target add wasm32-unknown-unknown
