@@ -37,7 +37,7 @@ pub fn RequestComponent() -> View {
     let request_method = create_signal(String::from("GET"));
     let status_code = create_signal(0);
     let body_content = create_signal(String::new());
-    let body_valid = create_signal(true);
+    let body_invalid = create_signal(false);
 
     // param tab
     let params = create_signal(Vec::<Param>::new());
@@ -64,14 +64,14 @@ pub fn RequestComponent() -> View {
     // conditional signals
     let result_show = create_signal(true);
     let active_tab = create_signal(0);
-    
+
     // functions
     let handle_submit = move |_| {
-        if !body_valid.get() { return; }
+        if !body_invalid.get() { return; }
         result_show.set(false);
         let url = build_url.get_clone();
         let method = request_method.get_clone();
-        let body = body_content.get_clone();
+        let body = body_content.get_clone().trim().to_string();
 
         spawn_local_scoped(async move {
             let args = serde_wasm_bindgen::to_value(&RequestCommandArgs{
@@ -81,7 +81,7 @@ pub fn RequestComponent() -> View {
             }).unwrap();
             let res = invoke("make_request", args).await;
             let response: RequestResponse = serde_wasm_bindgen::from_value(res).unwrap();
-            match serde_json::from_str::<serde_json::Value>(&response.data) {
+            match from_str::<serde_json::Value>(&response.data) {
                 Ok(json) => request_result.set(serde_json::to_string_pretty(&json).unwrap()),
                 Err(e) => request_result.set(e.to_string())
             }
@@ -91,8 +91,8 @@ pub fn RequestComponent() -> View {
     };
 
     let validate_json = move |input: &str| {
-        let is_valid = input.is_empty() || from_str::<serde_json::Value>(input).is_ok();
-        body_valid.set(is_valid);
+        let has_error = input.is_empty() && from_str::<serde_json::Value>(input).is_err();
+        body_invalid.set(has_error);
     };
 
     let handle_tab = move |e: web_sys::KeyboardEvent| {
@@ -141,6 +141,7 @@ pub fn RequestComponent() -> View {
                 )
                 button(
                     on:click=handle_submit,
+                    disabled=body_invalid.get(),
                     class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
                 ) {
                     "Send"
@@ -252,7 +253,7 @@ pub fn RequestComponent() -> View {
                                         on:keydown=handle_tab,
                                         on:input=move |e: web_sys::Event| validate_json(&e.unchecked_into::<web_sys::HtmlTextAreaElement>().value()),
                                         placeholder="Content here!",
-                                        class="w-full bg-gray-100 h-32 p-2 border rounded font-mono text-sm"
+                                        class="w-full h-32 bg-gray-100 p-2 border rounded font-mono text-sm"
                                     )
                                  }
                             },
