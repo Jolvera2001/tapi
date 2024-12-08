@@ -24,7 +24,7 @@ jobs:
               if: matrix.os == 'windows-latest'
               run: |
                 vcpkg integrate install
-                vcpkg install openssl:x64-windows-static
+                vcpkg install openssl:x64-windows-static-md
 
             - name: Install dependencies
               run: |
@@ -48,6 +48,8 @@ jobs:
               uses: tauri-apps/tauri-action@v0
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                OPENSSL_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md' || '' }}
+                VCPKG_ROOT: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg' || '' }}
               with: 
                 tagName: ${{ github.ref_name }}
                 releaseName: 'v__VERSION__'
