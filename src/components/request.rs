@@ -118,7 +118,7 @@ pub fn RequestComponent() -> View {
                         //console::log_1(&"Valid JSON".into());
                         body_invalid.set(false);
                     },
-                    Err(e) => {
+                    Err(_e) => {
                         //console::log_1(&format!("Invalid JSON: {}", e).into());
                         body_invalid.set(true);
                     },
@@ -186,8 +186,7 @@ pub fn RequestComponent() -> View {
                     "Send"
                 }
             }
-
-            div(class="text-sm text-gray-600 mt-2") {
+            div(class="text-sm text-gray-600 mt-2 p-2") {
                 "Complete URL: " (build_url.get_clone())
             }
             // tabs
@@ -312,8 +311,12 @@ pub fn RequestComponent() -> View {
             div(class="flex flex-col p-2") {
                 (if result_show.get() {
                     view! {
-                        div(class="border-2 shadow-sm text-xs p-2") {
-                            p { "Status code: " (status_code)}
+                        div(class="flex flex-row border-2 shadow-sm text-xs p-2 px-6 space-x-2 content-center") {
+                            p { "Status code: " (status_code) }
+                            div(class="grow") {}
+                            button(class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow") { 
+                                "Copy Result" 
+                            }
                         }
                         div(class="overflow-auto whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded max-h-64") {
                             pre {
