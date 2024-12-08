@@ -50,8 +50,11 @@ jobs:
                 components: llvm-tools-preview
 
             - name: Install grcov
-              run: cargo install grcov
-
+              run: |
+                if ! command -v grcov &> /dev/null; then
+                    cargo install grcov
+                fi
+                
             - name: Run frontend tests with coverage
               run: |
                 RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="frontend-%p-%m.profraw" cargo test --manifest-path ./Cargo.toml
