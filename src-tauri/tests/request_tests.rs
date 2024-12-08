@@ -1,27 +1,23 @@
-use tauri::Manager;
 use tapi_lib::commands::requests::{make_request, RequestResponse};
+use tauri::Manager;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wiremock::{MockServer, Mock, ResponseTemplate};
     use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
     async fn test_make_request_success() {
         let mock_server = MockServer::start().await;
-        
+
         Mock::given(method("GET"))
             .and(path("/test"))
             .respond_with(ResponseTemplate::new(200).set_body_string("test response"))
             .mount(&mock_server)
             .await;
 
-        let result = make_request(
-            &format!("{}/test", mock_server.uri()),
-            "GET",
-            None
-        ).await;
+        let result = make_request(&format!("{}/test", mock_server.uri()), "GET", None).await;
 
         assert!(result.is_ok());
         let response = result.unwrap();

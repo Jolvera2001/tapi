@@ -11,5 +11,8 @@
   "license": "ISC",
   "devDependencies": {
     "tailwindcss": "^3.4.15"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-clipboard-manager": "^2.0.1"
   }
 }
