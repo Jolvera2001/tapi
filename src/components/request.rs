@@ -3,6 +3,7 @@ use serde_json::from_str;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
+use web_sys::console;
 
 #[wasm_bindgen]
 extern "C" {
@@ -14,7 +15,7 @@ extern "C" {
 struct RequestCommandArgs<'a> {
     url: &'a str,
     method: &'a str,
-    body: Option<&'a str>
+    body: Option<serde_json::Value>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -67,17 +68,28 @@ pub fn RequestComponent() -> View {
 
     // functions
     let handle_submit = move |_| {
-        if !body_invalid.get() { return; }
+        if body_invalid.get() { return; }
         result_show.set(false);
         let url = build_url.get_clone();
         let method = request_method.get_clone();
-        let body = body_content.get_clone().trim().to_string();
+
+        let body = if method == "GET" || method == "DELETE" {
+            None
+        } else {
+            match from_str(&body_content.get_clone().trim()) {
+                Ok(json_val) => Some(json_val),
+                Err(e) => {
+                    console::log_1(&format!("JSON parsing error: {}", e).into());
+                    return;
+                }
+            }
+        };
 
         spawn_local_scoped(async move {
             let args = serde_wasm_bindgen::to_value(&RequestCommandArgs{
                 url: &url,
                 method: &method,
-                body: Some(&body)
+                body: body
             }).unwrap();
             let res = invoke("make_request", args).await;
             let response: RequestResponse = serde_wasm_bindgen::from_value(res).unwrap();
@@ -90,9 +102,29 @@ pub fn RequestComponent() -> View {
         result_show.set(true);
     };
 
-    let validate_json = move |input: &str| {
-        let has_error = input.is_empty() && from_str::<serde_json::Value>(input).is_err();
-        body_invalid.set(has_error);
+    let validate_json = move |e: web_sys::Event| {
+        if let Some(target) = e.target() {
+            if let Ok(textarea) = target.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                let input = textarea.value();
+                //console::log_1(&format!("Textarea value: {}", input).into());
+
+                if input.trim().is_empty() {
+                    body_invalid.set(false);
+                    return;
+                }
+
+                match from_str::<serde_json::Value>(&input) {
+                    Ok(_) => {
+                        //console::log_1(&"Valid JSON".into());
+                        body_invalid.set(false);
+                    },
+                    Err(e) => {
+                        //console::log_1(&format!("Invalid JSON: {}", e).into());
+                        body_invalid.set(true);
+                    },
+                }
+            }
+        }
     };
 
     let handle_tab = move |e: web_sys::KeyboardEvent| {
@@ -142,7 +174,14 @@ pub fn RequestComponent() -> View {
                 button(
                     on:click=handle_submit,
                     disabled=body_invalid.get(),
-                    class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
+                    class="
+                            bg-white font-semibold py-2 px-4 border text-gray-800 py-2 px-4 border border-gray-400 rounded shadow
+                            disabled:opacity-50
+                            disabled:cursor-not-allowed
+                            disabled:bg-gray-100
+                            hover:bg-gray-100
+                            transition-all
+                        "
                 ) {
                     "Send"
                 }
@@ -251,9 +290,15 @@ pub fn RequestComponent() -> View {
                                     textarea(
                                         bind:value=body_content,
                                         on:keydown=handle_tab,
-                                        on:input=move |e: web_sys::Event| validate_json(&e.unchecked_into::<web_sys::HtmlTextAreaElement>().value()),
+                                        on:input=validate_json,
                                         placeholder="Content here!",
-                                        class="w-full h-32 bg-gray-100 p-2 border rounded font-mono text-sm"
+                                        class=format!("w-full h-32 p-2 border rounded font-mono text-sm {}",
+                                            if body_invalid.get() {
+                                                "bg-red-100 border-red-500"
+                                            } else {
+                                                "bg-gray-100 border-gray-300"
+                                            }
+                                        )
                                     )
                                  }
                             },
