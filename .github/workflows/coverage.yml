@@ -55,6 +55,9 @@ jobs:
             - name: Install Tauri CLI
               run: cargo install tauri-cli --locked
 
+            - name: Install Trunk
+              run: cargo install trunk --locked
+
             - name: Install grcov
               run: cargo install grcov --force
 
@@ -70,7 +73,26 @@ jobs:
                 cargo tauri dev &
                 Tauri_PID=$!
 
-                sleep 20
+                MAX_ATTEMPTS=24
+                ATTEMPT=1
+
+                # Wait for up to 2 minutes for the server to be ready
+                echo "Waiting for dev server to start..."
+                while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+                  if curl -s http://localhost:1420 > /dev/null; then
+                    echo "Dev server is up!"
+                    break
+                  fi
+                  echo "Attempt $ATTEMPT of $MAX_ATTEMPTS: Server not ready, waiting..."
+                  sleep 20
+                  ATTEMPT=$((ATTEMPT + 1))
+                done
+
+                  if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
+                    echo "Dev server failed to start within 2 minutes"
+                    kill $TAURI_PID
+                    exit 1
+                  fi
 
                 RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="frontend-%p-%m.profraw" cargo test --manifest-path ./Cargo.toml
                 TEST_EXIT_CODE=$?
