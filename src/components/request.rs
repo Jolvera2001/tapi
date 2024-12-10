@@ -3,6 +3,7 @@ use serde_json::from_str;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
+use web_sys::console;
 
 #[wasm_bindgen]
 extern "C" {
@@ -14,7 +15,7 @@ extern "C" {
 struct RequestCommandArgs<'a> {
     url: &'a str,
     method: &'a str,
-    body: Option<&'a str>
+    body: Option<serde_json::Value>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -37,7 +38,7 @@ pub fn RequestComponent() -> View {
     let request_method = create_signal(String::from("GET"));
     let status_code = create_signal(0);
     let body_content = create_signal(String::new());
-    let body_valid = create_signal(true);
+    let body_invalid = create_signal(false);
 
     // param tab
     let params = create_signal(Vec::<Param>::new());
@@ -64,24 +65,35 @@ pub fn RequestComponent() -> View {
     // conditional signals
     let result_show = create_signal(true);
     let active_tab = create_signal(0);
-    
+
     // functions
     let handle_submit = move |_| {
-        if !body_valid.get() { return; }
+        if body_invalid.get() { return; }
         result_show.set(false);
         let url = build_url.get_clone();
         let method = request_method.get_clone();
-        let body = body_content.get_clone();
+
+        let body = if method == "GET" || method == "DELETE" {
+            None
+        } else {
+            match from_str(&body_content.get_clone().trim()) {
+                Ok(json_val) => Some(json_val),
+                Err(e) => {
+                    console::log_1(&format!("JSON parsing error: {}", e).into());
+                    return;
+                }
+            }
+        };
 
         spawn_local_scoped(async move {
             let args = serde_wasm_bindgen::to_value(&RequestCommandArgs{
                 url: &url,
                 method: &method,
-                body: Some(&body)
+                body: body
             }).unwrap();
             let res = invoke("make_request", args).await;
             let response: RequestResponse = serde_wasm_bindgen::from_value(res).unwrap();
-            match serde_json::from_str::<serde_json::Value>(&response.data) {
+            match from_str::<serde_json::Value>(&response.data) {
                 Ok(json) => request_result.set(serde_json::to_string_pretty(&json).unwrap()),
                 Err(e) => request_result.set(e.to_string())
             }
@@ -90,9 +102,29 @@ pub fn RequestComponent() -> View {
         result_show.set(true);
     };
 
-    let validate_json = move |input: &str| {
-        let is_valid = input.is_empty() || from_str::<serde_json::Value>(input).is_ok();
-        body_valid.set(is_valid);
+    let validate_json = move |e: web_sys::Event| {
+        if let Some(target) = e.target() {
+            if let Ok(textarea) = target.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                let input = textarea.value();
+                //console::log_1(&format!("Textarea value: {}", input).into());
+
+                if input.trim().is_empty() {
+                    body_invalid.set(false);
+                    return;
+                }
+
+                match from_str::<serde_json::Value>(&input) {
+                    Ok(_) => {
+                        //console::log_1(&"Valid JSON".into());
+                        body_invalid.set(false);
+                    },
+                    Err(_e) => {
+                        //console::log_1(&format!("Invalid JSON: {}", e).into());
+                        body_invalid.set(true);
+                    },
+                }
+            }
+        }
     };
 
     let handle_tab = move |e: web_sys::KeyboardEvent| {
@@ -141,13 +173,20 @@ pub fn RequestComponent() -> View {
                 )
                 button(
                     on:click=handle_submit,
-                    class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
+                    disabled=body_invalid.get(),
+                    class="
+                            bg-white font-semibold py-2 px-4 border text-gray-800 py-2 px-4 border border-gray-400 rounded shadow
+                            disabled:opacity-50
+                            disabled:cursor-not-allowed
+                            disabled:bg-gray-100
+                            hover:bg-gray-100
+                            transition-all
+                        "
                 ) {
                     "Send"
                 }
             }
-
-            div(class="text-sm text-gray-600 mt-2") {
+            div(class="text-sm text-gray-600 mt-2 p-2") {
                 "Complete URL: " (build_url.get_clone())
             }
             // tabs
@@ -250,9 +289,15 @@ pub fn RequestComponent() -> View {
                                     textarea(
                                         bind:value=body_content,
                                         on:keydown=handle_tab,
-                                        on:input=move |e: web_sys::Event| validate_json(&e.unchecked_into::<web_sys::HtmlTextAreaElement>().value()),
+                                        on:input=validate_json,
                                         placeholder="Content here!",
-                                        class="w-full bg-gray-100 h-32 p-2 border rounded font-mono text-sm"
+                                        class=format!("w-full h-32 p-2 border rounded font-mono text-sm {}",
+                                            if body_invalid.get() {
+                                                "bg-red-100 border-red-500"
+                                            } else {
+                                                "bg-gray-100 border-gray-300"
+                                            }
+                                        )
                                     )
                                  }
                             },
@@ -266,8 +311,12 @@ pub fn RequestComponent() -> View {
             div(class="flex flex-col p-2") {
                 (if result_show.get() {
                     view! {
-                        div(class="border-2 shadow-sm text-xs p-2") {
-                            p { "Status code: " (status_code)}
+                        div(class="flex flex-row border-2 shadow-sm text-xs p-2 px-6 space-x-2 content-center") {
+                            p { "Status code: " (status_code) }
+                            div(class="grow") {}
+                            button(class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow") { 
+                                "Copy Result" 
+                            }
                         }
                         div(class="overflow-auto whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded max-h-64") {
                             pre {

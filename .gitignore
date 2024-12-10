@@ -10,6 +10,7 @@ coverage.md
 coverage/
 coverage.lcov
 run-coverage.ps1
+.coverage-temp/
 
 # Environment files
 .env
