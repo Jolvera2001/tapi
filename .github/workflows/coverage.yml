@@ -42,11 +42,6 @@ jobs:
                   libssl-dev \
                   libglib2.0-dev
 
-            - name: Setup Chrome and ChromeDriver
-              uses: browser-actions/setup-chrome@v1
-              with:
-                chrome-version: stable
-
             - name: Setup ChromeDriver
               uses: nanasess/setup-chromedriver@v2
 
@@ -58,7 +53,7 @@ jobs:
                 components: llvm-tools-preview
 
             - name: Install grcov
-              run: cargo install grcov
+              run: cargo install grcov --force
 
             - name: Start ChromeDriver and X virtual framebuffer
               run: |
