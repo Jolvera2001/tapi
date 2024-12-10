@@ -40,8 +40,8 @@ jobs:
                   wget \
                   file \
                   libssl-dev \
-                  libglib2.0-dev
-                  chromium-chromedriver
+                  chromium-browser \  # Add this
+                  chromedriver
 
             - name: Install Rust
               uses: actions-rs/toolchain@v1 
