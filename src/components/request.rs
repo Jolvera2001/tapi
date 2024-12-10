@@ -157,6 +157,7 @@ pub fn RequestComponent() -> View {
             div(class=" flex flex-row space-x-2") {
                 select(
                     bind:value=request_method,
+                    "data-testid"="method-select",
                     class="border rounded p-2"
                 ) {
                     option(value="GET") { "GET" }
@@ -169,11 +170,13 @@ pub fn RequestComponent() -> View {
                     "type"="text",
                     bind:value=request_value,
                     placeholder="URL",
+                    "data-testid"="request-input",
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 )
                 button(
                     on:click=handle_submit,
                     disabled=body_invalid.get(),
+                    "data-testid"="request-send",
                     class="
                             bg-white font-semibold py-2 px-4 border text-gray-800 py-2 px-4 border border-gray-400 rounded shadow
                             disabled:opacity-50
