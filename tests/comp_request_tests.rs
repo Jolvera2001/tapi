@@ -28,7 +28,7 @@ async fn test_request_input() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = ClientBuilder::native()
         .capabilities(capabilities)
-        .connect("http://localhost:9515")
+        .connect("http://localhost:4444/wd/hub")
         .await?;
 
     // Navigate to your local dev server
