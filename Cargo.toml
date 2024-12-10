@@ -17,5 +17,9 @@ web-sys = { version = "0.3.74", features = [
     "KeyboardEvent"
 ]}
 
+[dev-dependencies]
+fantoccini = "0.21.2"
+tokio = { version = "1.42.0", features = [ "full" ]}
+
 [workspace]
 members = ["src-tauri"]
